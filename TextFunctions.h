@@ -24,13 +24,15 @@ struct Cursor{
     int column = 0;
 };
 
+//when accessing renderbuffer functions, always ensure you update the relative size first.
 class Editor{
     private:
     std::vector<std::string> textBuffer;
     std::vector<std::string> line;
     std::vector<Delta> undo;
     std::vector<Delta> redo;
-    Cursor cursor;
+    Cursor cursor, relative_cursor;
+    RenderBuff render;
 
     void UpdateCursor();
 
@@ -39,11 +41,17 @@ class Editor{
     void Backspace();
 
     void NewLine();
-
+    
+    void getRelativeCursor();
+    //calculate longest column size
     public:  
     Editor(std::vector<std::string> ref, Cursor curs) : textBuffer(ref), cursor(curs){}
 
-    RenderBuff render;
+    void printCursorRelative();
+
+    void printFrame();
+
+    void printLine(int);
 
     void testRender();
 
