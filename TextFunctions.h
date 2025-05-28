@@ -3,26 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include "general.h"
 #include "RenderBuffer.h"
-
-typedef enum{
-    none = 0,
-    backspace = 1,
-    space = 2,
-    insert = 3,
-    newline = 4
-} Actions;
-
-struct Delta{
-    Actions action = none;
-    int line = 0;
-    int column = 0;
-};
-
-struct Cursor{
-    int line = 0;
-    int column = 0;
-};
 
 //when accessing renderbuffer functions, always ensure you update the relative size first.
 class Editor{
@@ -43,6 +25,8 @@ class Editor{
     void NewLine();
     
     void getRelativeCursor();
+
+    void stripLastChar(int);
     //calculate longest column size
     public:  
     Editor(std::vector<std::string> ref, Cursor curs) : textBuffer(ref), cursor(curs){}
@@ -51,10 +35,12 @@ class Editor{
 
     void printFrame();
 
+    void dynamicPrint();
+
     void printLine(int);
 
     void testRender();
 
     void ReadInput();
-    
+
 };

@@ -1,20 +1,21 @@
-EL GATO LOCO
-los gatos locos
-gato poco
-poco locos
-EL
-easdf
-asdfsdafsa sdaf sdaf sdaf
-asdf asdf 
-adsfasdfsadf sad sadf sadf sdaf
-adsfasdfsadf
-asddase
+this is text
+text is good
 
-asdfsdfsaefeasdfeawgfgaer
+bad text is bad
+good text is good
 
-asdfsadfsaefwqfewqfwqe
-qwefsasdf
-asdfsadfdsaf sadf sdaf asef ewq
+good text makes for good test
+testing text is needed
+needed for text edit
 
-sadf sdaf sdaf dsa
-asd faewfqewqf we fsda fsda f
+need space
+low space
+nospace
+
+need long enough
+to allow scroll
+dynamic text editor
+better than static
+text.
+.
+fin

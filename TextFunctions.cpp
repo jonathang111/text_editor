@@ -20,27 +20,42 @@ void Editor::ReadInput(){
 }
 
 void Editor::Backspace(){
- textBuffer[cursor.line-1].erase(cursor.column-2, 1);
+    if(cursor.column == 1 && cursor.line != 1){
+        cursor.column = textBuffer[cursor.line-2].size();
+        stripLastChar(cursor.line-2);
+        textBuffer[cursor.line-2] += textBuffer[cursor.line-1];
+        textBuffer.erase(textBuffer.begin()+cursor.line-1);
+        cursor.line--;
+        // std::cout << "\033[" << 1 << ";" << 1 << "H";
+        // std::cout << "\033[2J\033[H";
+        //printFrame();
+        dynamicPrint();
+    }
+    else{
+    textBuffer[cursor.line-1].erase(cursor.column-2, 1);
     cursor.column--;
-    // std::cout << "\033[0K"; deletes in front; probably should implement instead of delete whole line (current impl.).
-    std::cout << "\033[" << cursor.line << ";" << 1 << "H";
+    std::cout << "\033[" << relative_cursor.line << ";" << 1 << "H";
     std::cout << "\033[2K";
     printLine(cursor.line);
-    std::cout << "\033[" << cursor.line << ";" << cursor.column << "H";
+    printCursorRelative();
+    }
+    // std::cout << "\033[0K"; deletes in front; probably should implement instead of delete whole line (current impl.).
 }
 
 void Editor::NewLine(){
     auto it = textBuffer.begin();
     it+= cursor.line;
-    textBuffer.emplace(it, textBuffer[cursor.line-1].substr(cursor.column-1, textBuffer[cursor.line-1].length()-1));
+    textBuffer.emplace(it, textBuffer[cursor.line-1].substr(cursor.column-1, textBuffer[cursor.line-1].length()));
     textBuffer[cursor.line-1].erase(cursor.column-1, textBuffer[cursor.line-1].length()-cursor.column);
     //textBuffer[cursor.line-1].append("\n");
     std::cout << "\033[" << 1 << ";" << 1 << "H";
     std::cout << "\033[2J\033[H";
     // for(auto& string : textBuffer)
     //     std::cout << string << std::endl;
-    render.printBuffer(textBuffer);
-    std::cout << "\033[" << cursor.line << ";" << cursor.column << "H";
+    cursor.line++;
+    cursor.column = 1;
+    //printFrame();
+    dynamicPrint();
 }
 
 void Editor::InsertChar(char input){
@@ -49,7 +64,6 @@ void Editor::InsertChar(char input){
     printLine(cursor.line); //DO NOT print the relative cursor line, we need the actual line stored in buffer.
     //std::cout << textBuffer[cursor.line-1].substr(cursor.column-1, textBuffer[cursor.line-1].length()-cursor.column);
     cursor.column++;
-    getRelativeCursor();
     printCursorRelative();
     //std::cout << "\033[" << relative_cursor.line << ";" << relative_cursor.column << "H";
 }
@@ -89,16 +103,29 @@ void Editor::UpdateCursor(){
                 cursor.column = textBuffer[cursor.line-1].length();
             }
     }
-    printCursorRelative();
+    if(cursor.line <= render.getTopLine() || cursor.line > render.getBottomLine())
+        dynamicPrint();
+    else
+        printCursorRelative();
 }
 
-void Editor::printFrame(){
+void Editor::printFrame(){ //for just printing the buffer, dynamic to window but not relative to cursor.
     render.updateBorderLines(textBuffer.size(), 30);
+    //render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
     render.printBuffer(textBuffer);
 }
 
+void Editor::dynamicPrint(){ //for printing relative to a cursor.
+    render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
+    getRelativeCursor();
+    std::cout << "\033[" << 1 << ";" << 1 << "H";
+    std::cout << "\033[2J\033[H";
+    render.printBuffer(textBuffer);
+    printCursorRelative();
+}
+
 void Editor::printLine(int line){
-    render.updateBorderLines(textBuffer.size(), 30);
+    render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
     render.printBufferLine(textBuffer, line-1);
 }
 
@@ -115,4 +142,13 @@ void Editor::printCursorRelative(){
 void Editor::testRender(){
     render.updateBorderLines(textBuffer.size(), 30);
     render.printBuffer(textBuffer);
+}
+
+/*if reading from file, there is likely a \r for some reason, you need to strip or else you get "ghosting"
+this is probably the most frustrating bug ive encountered for this program. just because you don't realize its a probelm until you run the debugger
+and analyze the vector contents.*/
+void Editor::stripLastChar(int line){
+    if (!textBuffer[line].empty() && textBuffer[line].back() == '\r') {
+        textBuffer[line].pop_back();
+}
 }
