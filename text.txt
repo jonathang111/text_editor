@@ -8,7 +8,7 @@ good text makes for good test
 testing text is needed
 needed for text edit
 
-need space
+need    s p a c  e
 low space
 nospace
 

@@ -1,4 +1,5 @@
 #pragma once
+
 typedef enum{
     none = 0,
     backspace = 1,

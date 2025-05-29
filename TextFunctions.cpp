@@ -109,6 +109,7 @@ void Editor::UpdateCursor(){
         printCursorRelative();
 }
 
+//should change all individual frames to just print with the render.frame, except for line only changes.
 void Editor::printFrame(){ //for just printing the buffer, dynamic to window but not relative to cursor.
     render.updateBorderLines(textBuffer.size(), 30);
     //render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
@@ -117,11 +118,49 @@ void Editor::printFrame(){ //for just printing the buffer, dynamic to window but
 
 void Editor::dynamicPrint(){ //for printing relative to a cursor.
     render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
-    getRelativeCursor();
-    std::cout << "\033[" << 1 << ";" << 1 << "H";
+    std::cout << "\033[H";
     std::cout << "\033[2J\033[H";
     render.printBuffer(textBuffer);
+    getRelativeCursor();
     printCursorRelative();
+}
+
+void Editor::TerminalResize(){
+    render.clearTerminalAndScrollback();
+    render.updateBorderLines(textBuffer.size(), 30);
+    getRelativeCursor();
+    render.buildFrameWithCursor(textBuffer, relative_cursor);
+    render.flushFrame();
+
+    //used for testing the time
+    // auto start_total_perceived_lag = std::chrono::high_resolution_clock::now();
+
+    // render.clearTerminalAndScrollback();
+
+    // render.updateBorderLines(textBuffer.size(), 30);
+    // getRelativeCursor();
+
+    // auto start_build = std::chrono::high_resolution_clock::now();
+    // render.buildFrameWithCursor(textBuffer, relative_cursor);
+    // auto end_build = std::chrono::high_resolution_clock::now();
+
+    // auto start_flush = std::chrono::high_resolution_clock::now();
+    // render.flushFrame();
+    // auto end_flush = std::chrono::high_resolution_clock::now();
+
+    // auto end_total_perceived_lag = std::chrono::high_resolution_clock::now();
+
+    // std::chrono::duration<double, std::milli> build_duration_ms = end_build - start_build;
+
+    // std::cerr << "buildFrameWithCursor took: " << build_duration_ms.count() << " ms" << std::endl;
+
+    // std::chrono::duration<double, std::milli> flush_duration_ms = end_flush - start_flush;
+
+    // std::cerr << "flushFrame took: " << flush_duration_ms.count() << " ms" << std::endl;
+
+    // std::chrono::duration<double, std::milli> total_perceived_lag_ms = end_total_perceived_lag - start_total_perceived_lag;
+
+    // std::cerr << "Total perceived lag time (clear to full display): " << total_perceived_lag_ms.count() << " ms" << std::endl;
 }
 
 void Editor::printLine(int line){
@@ -136,7 +175,7 @@ void Editor::getRelativeCursor(){ //position of cursor relative to window.
 
 void Editor::printCursorRelative(){
     getRelativeCursor();
-    std::cout << "\033[" << relative_cursor.line << ";" <<relative_cursor.column << "H";
+    std::cout << "\033[" << relative_cursor.line << ";" <<relative_cursor.column << "H" << std::flush;
 }
 
 void Editor::testRender(){
