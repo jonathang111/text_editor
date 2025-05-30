@@ -39,6 +39,12 @@ template<typename Container>
 struct iterable_contains_string<Container, std::void_t<typename Container::value_type>>
     : is_string<typename Container::value_type> {};
 
+
+enum Anchor{
+    topline = 1,
+    bottomline = 2
+};
+
 class RenderBuff{
     private:
     int relativeHeight, relativeWidth; //terminal measurements, updated by getTerminalSize()

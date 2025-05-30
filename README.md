@@ -28,3 +28,22 @@ next steps are to implement a frame system for all other functions that require 
 then i need to add a wrapping feature, a shit and drag feature, as well as multiple char deletion and replacement.
 
 Then finally a save feature for saving, as well as loading specific cursor locations and storing them too.
+
+need to fix the down cursor logic when updating terminal
+
+Theres no possible way to drag up and expand up then drag down and expand down. you need to choose and anchor.
+
+OK so when i update the winodw resize logic i need it to work in this manner
+-first assume i have function that can calculate the distance from cursor to topline/bottomline
+-second assume there is a specified "anchor" size, i.e. top, bottom, or even cursor.
+
+
+1. create two branches, one for shrink, one for grow.
+
+For the shrink, if the distance is not 0, then continue to change using distance from cursor to calculate the new topline or bottomline
+
+One thing is that we can alaways infer the direction of the windows "drag" by considering that we start the document with the cursor at the bottom of the document. we start at the bottom, so assume any shrink is directed from top to down, i.e. increase topline
+Else, if we are not at a border, we always assume the anchor of the most previous border that was 0. for example, if i started at distanceFromBottom = 0, then i assume shrink from top, if distanceFromTop = 0 then assume shrink from bellow.
+Though im not sure if this is the best approach, or if it should stay as a static preference that always shrink from top when available, then switch to bttom once distanceFromTop = 0, of it the anchor side should switch based on last known distance = 0.
+
+so if the user is scrolling up, then of course the distance is 0 for the topline and thus any shrink switch to a topline anchor, even if they scroll a little bit down, but if they were scrolling down then assume a bottom line anchor

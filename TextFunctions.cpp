@@ -127,7 +127,8 @@ void Editor::dynamicPrint(){ //for printing relative to a cursor.
 
 void Editor::TerminalResize(){
     render.clearTerminalAndScrollback();
-    render.updateBorderLines(textBuffer.size(), 30);
+    //render.updateBorderLines(textBuffer.size(), 30); //need a combination that calculates relative to cursor but also increases both bottom  and top lines upon terminal increase.
+    render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
     getRelativeCursor();
     render.buildFrameWithCursor(textBuffer, relative_cursor);
     render.flushFrame();
