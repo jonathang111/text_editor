@@ -7,7 +7,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include "general.h"
-#include "RenderBuffer.h"
+#include "RenderBuffer/RenderBuffer.h"
 #include <sstream>
 #include <chrono>
 
@@ -22,21 +22,18 @@ class Editor{
     Cursor cursor, relative_cursor;
     RenderBuff render;
 
+    void dynamicPrint();
+    void TerminalResize();
+
     void UpdateCursor();
+    void getRelativeCursor();
 
     void InsertChar(char);
-
     void Backspace();
-
     void NewLine();
-    
-    void getRelativeCursor();
 
     void stripLastChar(int);
 
-    void dynamicPrint();
-
-    void TerminalResize();
     //calculate longest column size
 
     struct sigaction sa;
@@ -53,6 +50,7 @@ class Editor{
     Editor(std::vector<std::string> ref, Cursor curs) : textBuffer(ref), cursor(curs){
         instance = this;
         render.enableAlternateScreen();
+        render.initalizeTerminal(textBuffer); //temporary?
     }
 
     ~Editor(){

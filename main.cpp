@@ -38,7 +38,7 @@ int main(){
     Editor test1(text, cursor);
     test1.start();
     std::cout << "\033[1;1H";
-    test1.printFrame();
+    //test1.printFrame();
     signal(SIGWINCH, Editor::handle_sigwinch);
     while(true){
         std::this_thread::sleep_for(std::chrono::milliseconds(8));

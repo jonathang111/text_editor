@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include "general.h"
+#include "../general.h"
 
 template<typename T, typename = void>
 struct is_iterable : std::false_type{};
@@ -41,19 +41,25 @@ struct iterable_contains_string<Container, std::void_t<typename Container::value
 
 
 enum Anchor{
-    topline = 1,
-    bottomline = 2
+    top = 1,
+    bottom = 2
 };
 
 class RenderBuff{
     private:
     int relativeHeight, relativeWidth; //terminal measurements, updated by getTerminalSize()
     int topline, bottomline;
+    int distanceToTop, distanceToBottom;
+    int previousHeight, previousWidth;
     std::ostringstream frame;
+    Anchor currentAnchor = bottom;
 
     bool getTerminalSize(); //used to calculate the terminal size
+    void distanceCalculations(Cursor);
 
     public:
+    void initalizeTerminal(std::vector<std::string>&);
+
     bool updateBorderLines(int, int); //given absolute sizes (lines, columns) of struct, calculates the new topline & bottomline; returns true if change in terminal detected?
     void updateBorderLinesCurs(int, int, Cursor); //used in dynamic resizing relative to cursor. (scrolling)
     void updateBorderLinesResize(int , int, Cursor); //used when resizing window, keeps in mind the position of the cursor when changing window size

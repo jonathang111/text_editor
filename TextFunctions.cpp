@@ -20,6 +20,7 @@ void Editor::ReadInput(){
 }
 
 void Editor::Backspace(){
+    raise(SIGWINCH);
     if(cursor.column == 1 && cursor.line != 1){
         cursor.column = textBuffer[cursor.line-2].size();
         stripLastChar(cursor.line-2);
@@ -109,14 +110,13 @@ void Editor::UpdateCursor(){
         printCursorRelative();
 }
 
-//should change all individual frames to just print with the render.frame, except for line only changes.
-void Editor::printFrame(){ //for just printing the buffer, dynamic to window but not relative to cursor.
-    render.updateBorderLines(textBuffer.size(), 30);
-    //render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
+
+void Editor::printFrame(){ //for just printing the buffer, dynamic to window but not relative to cursor, should only be used for initial print
+    render.updateBorderLines(textBuffer.size(), 30); //this function is why initalization should be done with this frame. It is an absolute calculator for topline and bottomline
     render.printBuffer(textBuffer);
 }
 
-void Editor::dynamicPrint(){ //for printing relative to a cursor.
+void Editor::dynamicPrint(){ //for printing relative to a cursor, for scrolling or refresh when cursor awareness is needed.
     render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
     std::cout << "\033[H";
     std::cout << "\033[2J\033[H";
@@ -125,43 +125,12 @@ void Editor::dynamicPrint(){ //for printing relative to a cursor.
     printCursorRelative();
 }
 
-void Editor::TerminalResize(){
+void Editor::TerminalResize(){ //for resizing, with specific terminal anchor logic.
     render.clearTerminalAndScrollback();
-    //render.updateBorderLines(textBuffer.size(), 30); //need a combination that calculates relative to cursor but also increases both bottom  and top lines upon terminal increase.
-    render.updateBorderLinesCurs(textBuffer.size(), 30, cursor);
     getRelativeCursor();
+    render.updateBorderLinesResize(textBuffer.size(), 30, cursor);
     render.buildFrameWithCursor(textBuffer, relative_cursor);
     render.flushFrame();
-
-    //used for testing the time
-    // auto start_total_perceived_lag = std::chrono::high_resolution_clock::now();
-
-    // render.clearTerminalAndScrollback();
-
-    // render.updateBorderLines(textBuffer.size(), 30);
-    // getRelativeCursor();
-
-    // auto start_build = std::chrono::high_resolution_clock::now();
-    // render.buildFrameWithCursor(textBuffer, relative_cursor);
-    // auto end_build = std::chrono::high_resolution_clock::now();
-
-    // auto start_flush = std::chrono::high_resolution_clock::now();
-    // render.flushFrame();
-    // auto end_flush = std::chrono::high_resolution_clock::now();
-
-    // auto end_total_perceived_lag = std::chrono::high_resolution_clock::now();
-
-    // std::chrono::duration<double, std::milli> build_duration_ms = end_build - start_build;
-
-    // std::cerr << "buildFrameWithCursor took: " << build_duration_ms.count() << " ms" << std::endl;
-
-    // std::chrono::duration<double, std::milli> flush_duration_ms = end_flush - start_flush;
-
-    // std::cerr << "flushFrame took: " << flush_duration_ms.count() << " ms" << std::endl;
-
-    // std::chrono::duration<double, std::milli> total_perceived_lag_ms = end_total_perceived_lag - start_total_perceived_lag;
-
-    // std::cerr << "Total perceived lag time (clear to full display): " << total_perceived_lag_ms.count() << " ms" << std::endl;
 }
 
 void Editor::printLine(int line){
@@ -177,11 +146,6 @@ void Editor::getRelativeCursor(){ //position of cursor relative to window.
 void Editor::printCursorRelative(){
     getRelativeCursor();
     std::cout << "\033[" << relative_cursor.line << ";" <<relative_cursor.column << "H" << std::flush;
-}
-
-void Editor::testRender(){
-    render.updateBorderLines(textBuffer.size(), 30);
-    render.printBuffer(textBuffer);
 }
 
 /*if reading from file, there is likely a \r for some reason, you need to strip or else you get "ghosting"

@@ -1,7 +1,7 @@
 # text_editor
 a simple text editor
 
-DONT RUN ON YOUR VSCODE TERMINAL, it slows the progrma a lot more than i thought it would.
+DONT RUN ON YOUR VSCODE TERMINAL, it slows the program a lot more than i thought it would.
 
 Personal Notes:
 Buffer only flushes on newline, fills up, or if we explicitly flush it.
