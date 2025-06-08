@@ -5,8 +5,10 @@
 #include <thread>
 #include "TextFunctions.h"
 #include <termios.h>
+#include <fcntl.h>
 
 Editor* Editor::instance = nullptr;
+const auto debounceDelay = std::chrono::milliseconds(4);
 
 int main(){
     char* gato = new char[10];
@@ -15,6 +17,7 @@ int main(){
     original = settings;
     settings.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(0, TCSAFLUSH, &settings);
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
 
     Cursor position;
 
@@ -37,15 +40,31 @@ int main(){
 
     Editor test1(text, cursor);
     test1.start();
-    std::cout << "\033[1;1H";
+    test1.printCursorRelative();
+    //std::cout << "\033[1;1H";
     //test1.printFrame();
     signal(SIGWINCH, Editor::handle_sigwinch);
     while(true){
         std::this_thread::sleep_for(std::chrono::milliseconds(8));
+        auto now = std::chrono::steady_clock::now();
+        auto last = lastResizeRequestTime.load(std::memory_order_relaxed);
+        // if (now - last >= debounceDelay) {
+        //     test1.TerminalResize();
+        //     lastResizeRequestTime.store(std::chrono::steady_clock::time_point::min(), std::memory_order_relaxed); // or set to max time to suppress repeats
+        // }
+        int ifdelta = delta.load(); //change to exchange here. if process happens in between, it will be set to 0
+        if (now - last >= debounceDelay || ifdelta >= 1) {
+            //int ifdelta = delta.exchange(0, std::memory_order_relaxed);
+            test1.TerminalResize();
+            lastResizeRequestTime.store(std::chrono::steady_clock::time_point::min(), std::memory_order_relaxed);
+        }
+
         test1.ReadInput();
-    }
+        }
+
     // test1.testRender();
     tcsetattr(0, TCSAFLUSH, &original);
+    fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) & ~O_NONBLOCK);
     Document.close();
     delete[] gato;
 }

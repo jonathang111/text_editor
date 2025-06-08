@@ -8,7 +8,7 @@ Buffer only flushes on newline, fills up, or if we explicitly flush it.
 Need to strategically place the flushes. if you flush too much then you get weird visual artifacts; too little then same problem.
 for some reason the entire things is laggy if cursor is not at the bottom.
 
-it took about a million and half years to make "addToFrame" function accept a dynamic amount of obejetcs. but it worked eventually. and it sucked.
+it took about a million and half years to make "addToFrame" function accept a dynamic amount of obejects. but it worked eventually. and it sucked.
 It still doesn't fix the fact that moving the cursor anywhere besides the last line causes visual artifacts.
 Likely the terminal needs to calculate and redraw the specific line with the cursor there, i.e. exactly what im doing except now we have a virtualized two step layer here.
 Best solution would be to instead of telling the terminal to redraw, i do the cursor drawing and treat the cursor as a characther to be placed into the buffer.
@@ -47,3 +47,9 @@ Else, if we are not at a border, we always assume the anchor of the most previou
 Though im not sure if this is the best approach, or if it should stay as a static preference that always shrink from top when available, then switch to bttom once distanceFromTop = 0, of it the anchor side should switch based on last known distance = 0.
 
 so if the user is scrolling up, then of course the distance is 0 for the topline and thus any shrink switch to a topline anchor, even if they scroll a little bit down, but if they were scrolling down then assume a bottom line anchor
+
+Right now i think a major issue is that SIGWINCH does not interrupt another signal. And since the function is running in the signal handling, then when a window is resized fast enough, it causes an incorrect print. This also explain why it would cause seg fault since likely it added one more or less in the terminalResize function, thus accessing an out of range index.
+
+There are a few fixes ive been able to find. First is self-pipe, basically just a mini queue where we use a read and write stream to write and read to some pipe which lets us know if a process was requested. This lets us always capture the last signal, which is ideal in every case.
+
+The second, and likely the one i will implement, is called debouncing. Basically you use a signal, set some bool, and instead of instantly trying to run terminalResize(), you instead wait a bit for another signal change. This introduces some latency, but it could also be seen as a good thing since it takes off some load on the CPU and also lets us always capture that last one. Plus we could additionally control the frame rate using that, though id have to calculate what the true frame rate would be since the loop rate and the handling rate would be added together.

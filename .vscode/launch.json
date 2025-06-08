@@ -2,26 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug main",
+      "name": "Attach to myapp (WSL-native)",
       "type": "cppdbg",
-      "request": "launch",
+      "request": "attach",
       "program": "${workspaceFolder}/main",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "${workspaceFolder}",
-      "environment": [],
-      "externalConsole": false,
+      "processId": "${command:pickProcess}",
       "MIMode": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ],
-      "preLaunchTask": "Build Project (Makefile)",
       "miDebuggerPath": "/usr/bin/gdb"
     }
   ]
 }
-d

@@ -21,6 +21,7 @@ void RenderBuff::initalizeTerminal(std::vector<std::string>& buffer){
     getTerminalSize();
     updateBorderLines(buffer.size(), 30); //change 30 to actual width later
     previousHeight = relativeHeight;
+    clearTerminalAndScrollback();
     printBuffer(buffer);
 }
 

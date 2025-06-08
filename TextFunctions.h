@@ -10,9 +10,12 @@
 #include "RenderBuffer/RenderBuffer.h"
 #include <sstream>
 #include <chrono>
+#include <atomic>
 
 //when accessing renderbuffer functions, always ensure you update the relative size first.
 //except for dynamic ones, they update themselves.
+extern std::atomic<std::chrono::steady_clock::time_point> lastResizeRequestTime;
+
 class Editor{
     private:
     std::vector<std::string> textBuffer;
@@ -23,7 +26,6 @@ class Editor{
     RenderBuff render;
 
     void dynamicPrint();
-    void TerminalResize();
 
     void UpdateCursor();
     void getRelativeCursor();
@@ -58,9 +60,16 @@ class Editor{
     }
 
     static void handle_sigwinch(int sig){
-        if (instance)
-            instance->TerminalResize(); //or maybe custom handler?
+        // if (instance)
+        //     instance->TerminalResize(); //or maybe custom handler?
+        lastResizeRequestTime.store(std::chrono::steady_clock::now(), std::memory_order_relaxed);
+        delta.fetch_add(1, std::memory_order_relaxed);
+
+        // lastSigTime = std::chrono::steady_clock::now();
+        // pendingResize = true;
     }
+
+    //void HandleSignal();
 
     void printCursorRelative();
 
@@ -71,4 +80,6 @@ class Editor{
     void testRender();
 
     void ReadInput();
+
+    void TerminalResize();
 };

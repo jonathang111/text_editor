@@ -4,6 +4,9 @@
 #include <vector>
 #include <sstream>
 #include "../general.h"
+#include <atomic>
+
+extern std::atomic<int> delta;
 
 template<typename T, typename = void>
 struct is_iterable : std::false_type{};
@@ -47,9 +50,10 @@ enum Anchor{
 
 class RenderBuff{
     private:
+    int objectDelta;
     int relativeHeight, relativeWidth; //terminal measurements, updated by getTerminalSize()
     int topline, bottomline;
-    int distanceToTop, distanceToBottom;
+    //int distanceToTop, distanceToBottom;
     int previousHeight, previousWidth;
     std::ostringstream frame;
     Anchor currentAnchor = bottom;
@@ -57,6 +61,8 @@ class RenderBuff{
     bool getTerminalSize(); //used to calculate the terminal size
     void distanceCalculations(Cursor);
 
+    void grow(Cursor);
+    void shrink(Cursor);
     public:
     void initalizeTerminal(std::vector<std::string>&);
 
@@ -68,6 +74,7 @@ class RenderBuff{
     void buildFrameWithCursor(const std::vector<std::string>& buffer, Cursor cursor);
     void flushFrame();
     void clearFrameBuffer();
+    void debug(int input);
 
     template<typename T>
     void addToFrame(T object){

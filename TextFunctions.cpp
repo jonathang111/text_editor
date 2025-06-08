@@ -1,4 +1,5 @@
 #include "TextFunctions.h"
+std::atomic<std::chrono::steady_clock::time_point> lastResizeRequestTime;
 
 void Editor::ReadInput(){
     char seq, seq1;
@@ -14,7 +15,10 @@ void Editor::ReadInput(){
             case 127: Backspace(); break;
             case '\n': NewLine(); break;
             case '\t':
-            default: InsertChar(seq);
+            default: 
+            if(seq >= 32 && seq <= 128)
+                InsertChar(seq);
+            else break;
         }
     }
 }
@@ -110,7 +114,6 @@ void Editor::UpdateCursor(){
         printCursorRelative();
 }
 
-
 void Editor::printFrame(){ //for just printing the buffer, dynamic to window but not relative to cursor, should only be used for initial print
     render.updateBorderLines(textBuffer.size(), 30); //this function is why initalization should be done with this frame. It is an absolute calculator for topline and bottomline
     render.printBuffer(textBuffer);
@@ -127,9 +130,10 @@ void Editor::dynamicPrint(){ //for printing relative to a cursor, for scrolling 
 
 void Editor::TerminalResize(){ //for resizing, with specific terminal anchor logic.
     render.clearTerminalAndScrollback();
-    getRelativeCursor();
     render.updateBorderLinesResize(textBuffer.size(), 30, cursor);
+    getRelativeCursor();
     render.buildFrameWithCursor(textBuffer, relative_cursor);
+    //render.debug(textBuffer.size());
     render.flushFrame();
 }
 
