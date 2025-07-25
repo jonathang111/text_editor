@@ -12,10 +12,13 @@ class FrameBuilder{
     
     public:
     void printBuffer(std::vector<std::string>&, TerminalViewport);
-    void printBufferLine(std::vector<std::string>&, int);
+    void printBufferLine(std::vector<std::string>&, int line);
 
     void buildFrame(const std::vector<std::string>& buffer, TerminalViewport);
     void buildFrameWithCursor(const std::vector<std::string>& buffer, Cursor cursor, TerminalViewport);
+
+    void printCursorOnly(const std::vector<std::string>& buffer, Cursor cursor, TerminalViewport);
+    void printLineOnly(); //use printBufferLine; held for temp refactor, delete later!
 
     template<typename T>
     void addToFrame(T object){

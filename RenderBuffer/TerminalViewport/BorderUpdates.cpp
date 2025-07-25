@@ -10,9 +10,8 @@ void TerminalViewport::UpdateSizeValues(){ //possible return bool too?
         relativeHeight = NewValues.first;
         relativeWidth = NewValues.second;
     }
-    else{
+    else
         std::cerr << "Failure in terminal resize\n";
-    }
 }
 
 bool TerminalViewport::updateStandard(int absolute_height , int absolute_width){ //return true if change in terminal size detected
@@ -43,9 +42,10 @@ void TerminalViewport::updateResize(int absolute_height, int absolute_width, Cur
     //distanceCalculations(cursor);
     if(ShrinkGrowCalculation > 0)
         grow(cursor, delta);
-    else if(ShrinkGrowCalculation < 0 && bottomline-topline > relativeHeight) //need to add condition to not shrink is absolute < relative
+    else if(ShrinkGrowCalculation < 0 && bottomline-topline > relativeHeight) //need to add condition to not shrink if absolute < relative
         shrink(cursor, delta);
 
+    //clamps
     if (topline < 0) topline = 0;
     if (bottomline > absolute_height) bottomline = absolute_height;
     if (bottomline - topline > relativeHeight) {
@@ -89,10 +89,10 @@ void TerminalViewport::grow(Cursor cursor, int delta){
 void TerminalViewport::shrink(Cursor cursor, int delta){
     int objectDelta = delta;
     if(currentAnchor == bottom){
-        if(topline == cursor.line)
-            bottomline-=objectDelta;
+        if(topline == cursor.line) //shirnk but cursor is top of screen
+            bottomline -= objectDelta;
         else
-            topline+=objectDelta;
+            topline += objectDelta;
     }
     else if(currentAnchor == top){
         if(topline != cursor.line)

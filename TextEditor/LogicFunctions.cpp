@@ -40,8 +40,8 @@ void Editor::Backspace(){
     cursor.column--;
     std::cout << "\033[" << relative_cursor.line << ";" << 1 << "H";
     std::cout << "\033[2K";
-    printLine(cursor.line);
-    printCursorRelative();
+
+    refreshCurrentLine();
     }
     // std::cout << "\033[0K"; deletes in front; probably should implement instead of delete whole line (current impl.).
 }
@@ -57,52 +57,56 @@ void Editor::NewLine(){
 }
 
 void Editor::InsertChar(char input){
- textBuffer[cursor.line-1].insert(cursor.column-1, 1 , input);
- std::cout << "\033[" << relative_cursor.line << ";" << 1 << "H";
-    printLine(cursor.line); //DO NOT print the relative cursor line, we need the actual line stored in buffer.
+    textBuffer[cursor.line-1].insert(cursor.column-1, 1 , input);
+    std::cout << "\033[" << relative_cursor.line << ";" << 1 << "H";
+    //printLine(cursor.line); //DO NOT print the relative cursor line, we need the actual line stored in buffer.
     cursor.column++;
-    printCursorRelative();
+    refreshCurrentLine();
 }
 
 void Editor::UpdateCursor(){
     char seq2;
     seq2 = getchar();
     switch(seq2){
-        case 'A': 
+        case 'A': ///move up
             if(cursor.line!=1){
-                cursor.line--;
+                shiftCursorUp();
                 if(cursor.column > textBuffer[cursor.line-1].length())
                     cursor.column = textBuffer[cursor.line-1].length();
             } 
             break;
-        case 'B': 
+        case 'B': //move down
             if(cursor.line < textBuffer.size()){
-                cursor.line++; 
+                shiftCursorDown(); 
                 if(cursor.column > textBuffer[cursor.line-1].length())
                 cursor.column = textBuffer[cursor.line-1].length();
             }
             break;
-        case 'C': 
+        case 'C': //move right
             /*as long as we are not on the last line or we arent on the last lines length, continue adding.*/
+            std::cout << textBuffer[cursor.line-1].length() << ' ' << textBuffer.size() << std::flush;
             if(!(cursor.line == textBuffer.size()) || !(cursor.column > textBuffer[textBuffer.size()-1].length())) 
                 cursor.column++; 
-            if(cursor.column > textBuffer[cursor.line-1].length() && cursor.line!= textBuffer.size()){
+            if(cursor.column > textBuffer[cursor.line-1].length() && cursor.line != textBuffer.size()){
+                shiftCursorDown();
                 cursor.column = 1;
-                cursor.line++;
+                refreshCurrentLine();
             }
             break;
-        case 'D':
-            if(cursor.line != 1 || cursor.column != 1)
+        case 'D': //move left
+            if(cursor.line != 1 || cursor.column != 1) //is or the right operation?
                 cursor.column--;
             if (cursor.column < 1 && cursor.line > 0){
-                cursor.line--;
-                cursor.column = textBuffer[cursor.line-1].length();
+                shiftCursorUp();
+                cursor.column = textBuffer[cursor.line-1].size();
+                refreshCurrentLine();
+                return;
             }
     }
     if(cursor.line <= Viewport.getTopLine() || cursor.line > Viewport.getBottomLine())
         dynamicPrint();
     else
-        printCursorRelative();
+        refreshCurrentLine();
 }
 
 void Editor::stripLastChar(int line){

@@ -9,17 +9,28 @@ void Editor::dynamicPrint(){ //for printing relative to a cursor, for scrolling 
     Viewport.updateScroll(textBuffer.size(), 30, cursor);
     FrameBuild.ClearTerminalAndScrollback();
     FrameBuild.printBuffer(textBuffer, Viewport);
-    //FrameBuild.clearFrameBuffer();
-    //FrameBuild.flushFrame();
-    printCursorRelative();
+    refreshCurrentLine();
+    //Need to move this print function to FramePrinting, and make it utilize the highlight char instead of the regular one
 }
 
 void Editor::printLine(int line){
     Viewport.updateScroll(textBuffer.size(), 30, cursor);
-    FrameBuild.printBufferLine(textBuffer, line-1);
+    FrameBuild.printBufferLine(textBuffer, line);
 }
 
-void Editor::printCursorRelative(){
+void Editor::refreshLineRel(int line){ //refreshed current line with correct cursor highlight. Relative line only
+    int absoluteLine = Viewport.getTopLine()+line;
+    moveCursorTo(line, 1);
+    std::cout << "\33[2K" << std::flush;
+    if(cursor.line == absoluteLine)
+        FrameBuild.printCursorOnly(textBuffer, cursor, Viewport);
+    else
+        FrameBuild.printBufferLine(textBuffer, absoluteLine);
+}
+
+void Editor::refreshCurrentLine(){ //is this needed?
+    Viewport.updateScroll(textBuffer.size(), 30, cursor);
     getRelativeCursor();
-    std::cout << "\033[" << relative_cursor.line << ";" <<relative_cursor.column << "H" << std::flush;
+    moveCursorTo(relative_cursor.line, 1);
+    FrameBuild.printCursorOnly(textBuffer, cursor, Viewport);
 }

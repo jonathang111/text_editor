@@ -1,4 +1,4 @@
-#include "FramePrinting.h"
+#include "Renderer.h"
 
 void FrameBuilder::printBuffer(std::vector<std::string>& buffer, TerminalViewport term){
     for (int it = term.getTopLine(); it < term.getBottomLine(); ++it){
@@ -11,8 +11,8 @@ void FrameBuilder::printBuffer(std::vector<std::string>& buffer, TerminalViewpor
 }
 
 void FrameBuilder::printBufferLine(std::vector<std::string>& buffer, int line){
-    if(line > 0 && !(line > buffer.size())){
-        std::cout << buffer[line];
+    if(line > 0 && !(line > buffer.size())){ //problem here when printing line 21?
+        std::cout << buffer[line-1];
     }
     else
         return;
@@ -51,6 +51,21 @@ void FrameBuilder::buildFrameWithCursor(const std::vector<std::string>& buffer, 
         }
         frame << '\n';
     }
+}
+
+void FrameBuilder::printCursorOnly(const std::vector<std::string>& buffer, Cursor cursor, TerminalViewport term){
+    std::cout << "\33[2K" << std::flush;
+    int line = cursor.line-1;
+    std::string cursLine = buffer[line];
+    std::string newLine;
+    newLine.append(cursLine.substr(0, cursor.column-1));
+    if(cursor.column < cursLine.size() && cursor.column != 0){ //exception thrown if column == 0 when this function is called, specifically with newLine.append since we use cursLine.substr(cursor.column-1,1)
+    newLine.append("\033[7m" + cursLine.substr(cursor.column-1, 1) + "\033[0m"); 
+    newLine.append(cursLine.substr(cursor.column, cursLine.size()));
+    }
+    else
+        newLine.append(std::string("\033[7m") + " " + "\033[0m"); 
+    std::cout << newLine << std::flush;
 }
 
 void FrameBuilder::ClearTerminalAndScrollback(){

@@ -10,7 +10,7 @@
 #include "../RenderBuffer/TerminalCommands.h"
 #include "../RenderBuffer/TerminalViewport/TerminalViewport.h"
 #include "../RenderBuffer/Templates.h"
-#include "../RenderBuffer/FramePrinting.h"
+#include "../RenderBuffer/Renderer.h"
 #include <sstream>
 #include <chrono>
 #include <atomic>
@@ -32,18 +32,37 @@ class Editor{
     FrameBuilder FrameBuild;
     termios original;
 
-    void dynamicPrint();
-
-    void UpdateCursor();
-    void getRelativeCursor();
-
+    // Logic Functions
     void InsertChar(char);
     void Backspace();
     void NewLine();
 
     void stripLastChar(int);
 
+    // Print Functions
+
+    void printFrame(); //for debugging
+
+    void dynamicPrint(); //Used for frame updates where scroll happens, refreshes entire frame.
+
+    void printLine(int); //for debugging
+
+    void testRender(); //for debugging
+
+    void refreshLineRel(int); //relative line only
+    void refreshCurrentLine();
+
+    // Utilities
     void InitalizeTerminal();
+    void TerminalResize();
+
+    void UpdateCursor();
+    void getRelativeCursor();
+
+    void shiftCursorUp();
+    void shiftCursorDown();
+
+    void moveCursorTo(int, int);
 
     struct sigaction sa;
 
@@ -67,26 +86,9 @@ class Editor{
     }
 
     static void handle_sigwinch(int sig){
-        // if (instance)
-        //     instance->TerminalResize(); //or maybe custom handler?
         Editor::lastResizeRequestTime.store(std::chrono::steady_clock::now(), std::memory_order_relaxed);
         Editor::delta.fetch_add(1, std::memory_order_relaxed);
-
-        // lastSigTime = std::chrono::steady_clock::now();
-        // pendingResize = true;
     }
-
-    //void HandleSignal();
-
-    void printCursorRelative();
-    
-    void TerminalResize();
-
-    void printFrame();
-
-    void printLine(int);
-
-    void testRender();
 
     void ReadInput();
 };

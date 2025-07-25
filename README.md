@@ -53,3 +53,68 @@ Right now i think a major issue is that SIGWINCH does not interrupt another sign
 There are a few fixes ive been able to find. First is self-pipe, basically just a mini queue where we use a read and write stream to write and read to some pipe which lets us know if a process was requested. This lets us always capture the last signal, which is ideal in every case.
 
 The second, and likely the one i will implement, is called debouncing. Basically you use a signal, set some bool, and instead of instantly trying to run terminalResize(), you instead wait a bit for another signal change. This introduces some latency, but it could also be seen as a good thing since it takes off some load on the CPU and also lets us always capture that last one. Plus we could additionally control the frame rate using that, though id have to calculate what the true frame rate would be since the loop rate and the handling rate would be added together.
+
+Refactor has been completed. After some realization that RenderBuffer had too many responsibilities, i split it up into more modular files. TextEditor is still the same except that it holds the main logic loop and is in charge of settings up the terminal enviornment. 
+
+Current folders inlcude /RengerBuffer, which holds two main classes, FramePrinting, and TerminalViewport. TerminalViewport updates the borderlines and holds the logic for figuring out the topline/bottomline of the visible lines given a buffer. FramPrinting just prints the TerminalViewport. The idea is that you pass in an object to print it.
+
+Additionally, the folder includes various headers and header definition files used for manipulating the terminal. Such as eneabling an alternate screen, setting and disabling various terminal options (termios), and clearing the screen (alternate terminal specific clearing).
+
+The other folder is /TextEditor which includes the higher level class that is interacted with in main. Currently the only usable functions are debuggers, various prints (for testing) and most importantly, start(). The start() function automatically deals with the terminal settings, as well as the termianl alternate. Future plans include implementing a flag like setting that is able to set various options, such as debugging, different terminal settings, etc.
+
+Current Offset Realizations:
+- Current line is offset by 1 from the cursor, so current line is cursor.line-1.
+- Text file test has 21 lines exactly.
+Currently need to work on:
+
+COMPLETE:
+- TextFunction contains a printCursorRelative; this should not be printing a frame or any layout-related content. In fact, this should be the responsibility of frame printing, not the TextFunction itself.
+    - Currently, I’m removing the cursor-relative logic and replacing it with an abstracted function in the editor that uses renderer.printCursorOnly. This method prints only the current line with the cursor highlighted. I can use this instead.
+        - FIXNOTES: Done. Plus, frambuilder was renamed to renderer. PrintFunctions in Editor contains RefreshLine() now.
+- Typing causes the highlight to appear on top of the current character instead of in front of it. i.e., it overwrites the character instead of showing the cursor before it.
+    - Look into how insert-character mode moves the cursor.
+    - FIXENOTES: Prolbem was just that column was added AFTER the line refresh, which wouldn't update it properly before refreshing the line. Just moved the column update to before refreshline was called.
+- If cursor is at the end of the line when shifted up or down, it is not deleted, however, if in middle, it is correctly refreshed.
+    - FIXNOTES: Problem was the that while yes, the line was being refreshed, it was not being deleted, meaning that if the cursor was at the end, i.e. vector[line].size()+1 column, then the new refresh would not even reach that end cursor point to delete it. Solution was just to add a clear line code in refreshLineRel();
+
+Printing does work relatively, but:
+- There’s a problem refreshing the previous line properly.
+    - It also doesn’t handle printing correctly when the terminal is not at full size.
+    - When trying to clear the previous line, we are currently printing the line that the cursor is currently one, which is wrong.
+        - Probably because we use the refreshline function, which uses the cursors position even if we explictily state to reprint a specific line. To fix this, lets just use a printLine only function.
+            - Fixed, problem was with deciding which line to fix, and also reworked "printBufferLine" function to not need manual subtraction of 1 from the current line to print x buffer.
+    -FIXNOTES: First, the terminal now works with resizing, the anchor issue is not yet placed, but do not that it may already be fixed by the time anyone reads this, these little fix notes are not updated. Line is properly printed, this was fixed by creating shift functions, which pushes cursor up, refreshes line, then refreshes previous line, which deletes the cursor. 
+
+    And it works relatively, being able to get the previous cursor via the collaboration of 'Cursor cursor' in TextFunctions.h refreshLineRel() func and the printBufferLine() OR printCursorOnly() function. As the name sugguests, this prints a line in the terminal with logic that utilizies the cursor.line, but only takes an input of a line number relative to the current viewport size. It even does some lazy computing, if you refresh the current line, and the cursor is still on the targeted line, i.e. you made some inline edit, it will print the cursor with printCursorOnly(), which refreshes the line with a cursor added. Else, if you ask to print a line that does NOT contain a cursor, then it prints the line with the printBufferLine() function, which does not even attempt to add a cursor to save time.
+
+- Fix the cursor based scrolling after previous update, currently only topline updates, likely because the shift up function does not account for out of bounds. We need to add a check, if the cursor reaches beyond the current viewport, refresh entire screen instead of line refresh.
+    - FIXNOTES: fixed, used condition: cursor.line <= Viewport.getTopLine(), which is the same logic used in resize, but, in this case it will only refresh the entire terminal only if the topline viewport is passed by the cursor line. Else, if will continue with the regular logic, which is: refreshLineRel(relative_cursor.line); AND refreshCurrentLine();, thus not wasting resources.
+
+- Shiftdown prints line +1 of what it should on the previous line. I.e. if you had 1 \n 2 \n 3\n, shift down would print -> 3 \n 2\n 3\n
+    -FIXNOTES: Problem was that the refresh line realtive was in fact, not relative. It would use cursor.line() in order to find the line to print. Issue was with how we compute the absolute line, which would use cursor.line, which as noted above, is always offset by +1. So then because the function was reliant on the cursor, it would work for something like shift up since the internal "absolute_line" variable was computed with cursor.line+1, i.e. an absolute index for textBuffer. When you shifted down, it would look at the line ahead of the cursor, cursor.line+1, but the problem is that you targeted a line before the target, which wouldnt work, to visualize this:
+                line1: apple
+                line2: bannana(C)
+                line3: cat
+                line4: rat
+                - where (C) is cursor
+                shiftUp(), using refreshLineRel(2):
+                line1: apple(C)
+                line2: bannana <- this is cursor.line()+1
+                line3: cat
+                line4: rat
+                - since cusror.line()+1 is absolute, it will print this at line 2, which is correct as the line at line 2 is in fact cursor.line+1
+                shiftDown(), using refreshLineRel(2):
+                line1: apple
+                line2: rat <- incorrect line
+                line3: cat (c)
+                line4: rat <- this is cursor.line+1
+                - thus showing the important of a relative function, in fact, being a relative function. This was a pretty dumb mistake
+
+WIP:
+- Expanding sometimes fails to print the lower content.
+- No anchor switch logic on resize.
+    - Need to work on shift down function for cursor movement down event.
+- Resizing does shrink well, but fails to grow the bottom line past its last known position. 
+- Scrolling left out of bounds causes seg fault.
+- Arrow scolling "too fast" sometimes causes highlight to dissapear
+- very last char highlight is invisible. 

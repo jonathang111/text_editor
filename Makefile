@@ -1,2 +1,2 @@
 Compile:
-	g++ -g -std=c++17 main.cpp TextEditor/LogicFunctions.cpp TextEditor/MainLoop.cpp TextEditor/PrintFunctions.cpp TextEditor/UtilityFunctions.cpp RenderBuffer/FramePrinting.cpp RenderBuffer/TerminalCommands.cpp RenderBuffer/TerminalViewport/BorderUpdates.cpp RenderBuffer/TerminalViewport/GetFunctions.cpp -o main
+	g++ -g -std=c++17 main.cpp TextEditor/LogicFunctions.cpp TextEditor/MainLoop.cpp TextEditor/PrintFunctions.cpp TextEditor/UtilityFunctions.cpp RenderBuffer/Renderer.cpp RenderBuffer/TerminalCommands.cpp RenderBuffer/TerminalViewport/BorderUpdates.cpp RenderBuffer/TerminalViewport/GetFunctions.cpp -o main
