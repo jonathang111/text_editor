@@ -28,7 +28,7 @@ void Editor::refreshLineRel(int line){ //refreshed current line with correct cur
         FrameBuild.printBufferLine(textBuffer, absoluteLine);
 }
 
-void Editor::refreshCurrentLine(){ //is this needed?
+void Editor::refreshCurrentLine(){
     Viewport.updateScroll(textBuffer.size(), 30, cursor);
     getRelativeCursor();
     moveCursorTo(relative_cursor.line, 1);

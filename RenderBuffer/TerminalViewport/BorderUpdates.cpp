@@ -64,7 +64,7 @@ void TerminalViewport::updateScroll(int absolute_height, int absolute_width, Cur
     if (cursor.line <= topline){ //cursor is above topline or at topline (topline is 0 indexed, cursor is 1 indexed)
         topline = cursor.line-1;
         bottomline = topline + relativeHeight;
-    } else if (cursor.line >= bottomline){ //cursor is below bottomline
+    } else if (cursor.line > bottomline){ //cursor is below bottomline
         bottomline = cursor.line + 1;
         topline = bottomline - relativeHeight;
     }

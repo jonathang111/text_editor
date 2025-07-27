@@ -110,6 +110,13 @@ Printing does work relatively, but:
                 line4: rat <- this is cursor.line+1
                 - thus showing the important of a relative function, in fact, being a relative function. This was a pretty dumb mistake
 
+- Moving left or right from a smaller than fit all window size causes print of last line to lastline-1 line.
+    - problem is in "getRealtiveCursor()" update function.
+    - Shifting topline up works because it refreshes the entire frame, using a for loop until it reaches the relative_cursor.line and adds the cursor.
+    - Any function that uses the refresh current line does not seem to work because the relative line update does NOT seem to work.
+    - Further Questions: Even if relative cursor works on frame rebuild, why does it actually go to the correct line? Also, why does refresh current line still work on every other line but that forst one?
+    -FIXNOTES: problem was with the updateScroll variable, which would adjust the window to scroll down if cursor.line >= bottomLine, which is wrong since it woudl scroll on the last line. Since it was being called in the refreshCurrentLine(), it would cause an improper update of topline, thus causing an incorrect relative cursor. This also seemed to scroll resize problem wher the bottom line was not completely printing, even when the viewport size can clearly fit the buffer.
+
 WIP:
 - Expanding sometimes fails to print the lower content.
 - No anchor switch logic on resize.
@@ -118,3 +125,4 @@ WIP:
 - Scrolling left out of bounds causes seg fault.
 - Arrow scolling "too fast" sometimes causes highlight to dissapear
 - very last char highlight is invisible. 
+- Rendering lag when using another program. Likely a non-issue since even other editors face the same issue

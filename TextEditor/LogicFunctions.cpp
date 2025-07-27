@@ -84,7 +84,6 @@ void Editor::UpdateCursor(){
             break;
         case 'C': //move right
             /*as long as we are not on the last line or we arent on the last lines length, continue adding.*/
-            std::cout << textBuffer[cursor.line-1].length() << ' ' << textBuffer.size() << std::flush;
             if(!(cursor.line == textBuffer.size()) || !(cursor.column > textBuffer[textBuffer.size()-1].length())) 
                 cursor.column++; 
             if(cursor.column > textBuffer[cursor.line-1].length() && cursor.line != textBuffer.size()){
