@@ -38,19 +38,30 @@ void TerminalViewport::updateResize(int absolute_height, int absolute_width, Cur
     //two cases, shrink or grow. both need distance calc
     UpdateSizeValues();
     int ShrinkGrowCalculation = relativeHeight - previousHeight;
-    
+    /* Given the size of the terminal subtracted by the previous height,
+    if the difference is more than 0, then it must be a growth since current height > previous height;
+    else if negative, then previous height must be larger than current. */
+
     //distanceCalculations(cursor);
-    if(ShrinkGrowCalculation > 0)
+    if(ShrinkGrowCalculation > 0){
         grow(cursor, delta);
-    else if(ShrinkGrowCalculation < 0 && bottomline-topline > relativeHeight) //need to add condition to not shrink if absolute < relative
+        growAnchorCheck(cursor, absolute_height);
+    }
+    else if(ShrinkGrowCalculation < 0 && bottomline-topline > relativeHeight){ //need to add condition to not shrink if absolute < relative
         shrink(cursor, delta);
+        shrinkAnchorCheck(cursor, absolute_height, 2);
+    }
 
     //clamps
-    if (topline < 0) topline = 0;
-    if (bottomline > absolute_height) bottomline = absolute_height;
-    if (bottomline - topline > relativeHeight) {
+    if(topline < 0) 
+        topline = 0;
+
+    if(bottomline > absolute_height) 
+        bottomline = absolute_height;
+
+    if(bottomline - topline > relativeHeight) 
         topline = bottomline - relativeHeight;
-    }
+
     if(topline != 0 && relativeHeight >= absolute_height){ //likely ioctl dsync issue? clamp is only fix rn
         topline = 0;
         bottomline = absolute_height;
@@ -79,10 +90,10 @@ void TerminalViewport::updateScroll(int absolute_height, int absolute_width, Cur
 void TerminalViewport::grow(Cursor cursor, int delta){
     int objectDelta = delta;
     if(currentAnchor == bottom){
-        topline-=objectDelta;
+        topline -= objectDelta;
     }
     else if(currentAnchor == top){
-        bottomline-=objectDelta;
+        bottomline += objectDelta;
     }
 }
 
@@ -100,4 +111,25 @@ void TerminalViewport::shrink(Cursor cursor, int delta){
         else
             topline+=objectDelta;
     }
+}
+
+void TerminalViewport::shrinkAnchorCheck(Cursor cursor, int absolute_height, int absolute_width){
+    if(cursor.line == topline + 1 || cursor.line == bottomline - 1){
+        if(cursor.line == topline + 1)
+            currentAnchor = top;
+        else
+            currentAnchor = bottom;
+    }
+
+    // if(currentAnchor != top && topline == 1 && bottomline != absolute_height)
+    //     currentAnchor = top;
+    // else if(currentAnchor != bottom && bottomline == absolute_height && topline != 1)
+    //     currentAnchor = bottom;
+
+    return;
+}
+
+void TerminalViewport::growAnchorCheck(Cursor cursor, int absolute_height){
+    if(currentAnchor == top && bottomline == absolute_height && topline != 1)
+    currentAnchor = bottom;
 }

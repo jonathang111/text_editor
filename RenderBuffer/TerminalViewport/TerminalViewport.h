@@ -23,6 +23,10 @@ private:
     //functions used to grow viewable port using atomic detla.
     void grow(Cursor, int);
     void shrink(Cursor, int);
+
+    //checks to see if anchor switch is needed, if it is, switch
+    void shrinkAnchorCheck(Cursor, int, int);
+    void growAnchorCheck(Cursor, int);
 public:
     void UpdateSizeValues();
     void initalizeTerminal(std::vector<std::string>& buffer);

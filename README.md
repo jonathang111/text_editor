@@ -1,7 +1,7 @@
 # text_editor
 a simple text editor
 
-DONT RUN ON YOUR VSCODE TERMINAL, it slows the program a lot more than i thought it would.
+DONT RUN ON YOUR VSCODE TERMINAL, electron slows down the program, causing a laggy appearance.
 
 Personal Notes:
 Buffer only flushes on newline, fills up, or if we explicitly flush it.
@@ -118,13 +118,55 @@ Printing does work relatively, but:
     -FIXNOTES: problem was with the updateScroll function, which would adjust the window to increase buffer visible if cursor.line >= bottomLine, which is wrong since it woudl scroll on the last line. Since it was being called in the refreshCurrentLine(), it would cause an improper update of topline, thus causing an incorrect relative cursor. This also seemed to scroll resize problem wher the bottom line was not completely printing, even when the viewport size can clearly fit the buffer.
 
 - Expanding sometimes fails to print the lower content.
-    -FIXNOTES: fixed by updating updatescroll logic.
+    - FIXNOTES: fixed by updating updatescroll logic.
 
+- Resizing does shrink well, but fails to grow the bottom line past its last known position.
+    - FIXNOTES: Works, fixed by adding proper anchor switch logic for both gorwth and shrink.
+
+- No anchor switch logic on resize
+    - Added in
 WIP:
-- No anchor switch logic on resize.
-    - Need to work on shift down function for cursor movement down event.
-- Resizing does shrink well, but fails to grow the bottom line past its last known position. 
+- Anchor logic works on both resize and growth, but only when slowly done. Any fast shifts in terminal size result in incorrect resize. Debouncing should have solved this, but either its a bad implementation of debouncing or some other unkown bug. 
 - Scrolling left out of bounds causes seg fault.
 - Arrow scolling "too fast" sometimes causes highlight to dissapear
 - very last char highlight is invisible. 
 - Rendering lag when using another program. Likely a non-issue since even other editors face the same issue
+
+Models:
+    updateResize:
+        ViewPort.topLine = V_T
+        ViewPort.bottomLine = V_B
+        ViewPort.previousHeight = V_PH
+        ViewPort.currentAnchor = V_CA
+        ViewPort.relativeHeight = V_RH
+
+        Cursor.line = C_l
+        
+        func inputs:
+        absolute_height = absH
+        delta = delta
+
+
+        Flow:
+        ShrinkGrowCalculation = V_RH - V_PH
+
+        if(ShrinkGrowCalculation > 0)
+            grow(cursor, delta);
+            growAnchorCheck(cursor, absolute_height);
+
+        else if(ShrinkGrowCalculation < 0 AND V_B - V_T > V_RH)
+            shrink(cursor, delta);
+            shrinkAnchorCheck(cursor, absH, 2); (Note that 2 is a placeholder, does nothing)
+
+        Notes: Currently delta is updated by the interrupt for SIGWINCH, given here:
+                int CurrentDelta = delta.exchange(0, std::memory_order_relaxed);
+                FrameBuild.ClearTerminalAndScrollback();
+                Viewport.updateResize(textBuffer.size(), 30, cursor, CurrentDelta);
+                getRelativeCursor();
+                FrameBuild.buildFrameWithCursor(textBuffer, relative_cursor, Viewport);
+                FrameBuild.flushFrame(); 
+
+            A possible bug occurs because we rely on the interrupt being in charge of updating the delta. Previously, one major reason a "bug (though not sure if it has been fixed)" was that currentDetla would be erased at the end of the resize call, meaning that when it did finally resize, any terminal changes that occured while running this resize instruction would have resulted in the deletion of any changes done while resizing. One possible fix is the rely on calculating a delta based on the size of the terminal and the previous state of the terminal viewport rather than relying on recording the number of changes that have occured.
+
+            Another possible problem, in a similar vein to the delta miscalculations is ShrinkGrowCalculations. Since both V_RH and V_PH are so reliant on the previous state of the object, then it could result in an improper calculation. A fix could include recordin the absolute size of the terminal instead.
+        
